@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { getDrizzle } from "@cms/database/client";
+import { getDrizzle, withSqliteTransaction } from "@cms/database/client";
 import { siteAssets } from "@cms/database/schema";
 import {
   parsePageAssetsJson,
@@ -40,11 +40,13 @@ export const getSiteAssetFilenames = cache(async (): Promise<string[]> => {
 export async function replaceSiteAssets(
   assets: Record<string, string>,
 ): Promise<void> {
-  const db = getDrizzle();
   const json = serializePageAssets(assets);
   const cleaned = parsePageAssetsJson(json);
-  db.delete(siteAssets).run();
-  for (const [filename, content] of Object.entries(cleaned)) {
-    db.insert(siteAssets).values({ filename, content }).run();
-  }
+  withSqliteTransaction(() => {
+    const db = getDrizzle();
+    db.delete(siteAssets).run();
+    for (const [filename, content] of Object.entries(cleaned)) {
+      db.insert(siteAssets).values({ filename, content }).run();
+    }
+  });
 }

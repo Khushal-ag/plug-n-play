@@ -132,4 +132,13 @@ export function getDrizzle(): DrizzleDb {
   return db;
 }
 
+/**
+ * Run synchronous work in one SQLite transaction on the shared CMS connection
+ * (rolls back if `fn` throws).
+ */
+export function withSqliteTransaction<T>(fn: () => T): T {
+  const sqlite = getSqlite();
+  return sqlite.transaction(fn)();
+}
+
 export { schema };
