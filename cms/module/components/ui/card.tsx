@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { cardChrome } from "@cms/lib/ui-surface";
 import { cn } from "@cms/lib/utils";
 
 const Card = React.forwardRef<
@@ -8,7 +9,8 @@ const Card = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     className={cn(
-      "rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm",
+      "rounded-xl border border-border/90 bg-card text-card-foreground",
+      cardChrome,
       className,
     )}
     ref={ref}
@@ -22,7 +24,7 @@ const CardHeader = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
-    className={cn("flex flex-col gap-1.5 p-6 pb-0", className)}
+    className={cn("flex flex-col gap-1 p-6 pb-0", className)}
     ref={ref}
     {...props}
   />
@@ -35,7 +37,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     className={cn(
-      "text-base leading-none font-semibold text-slate-900",
+      "text-base font-semibold tracking-tight text-foreground",
       className,
     )}
     ref={ref}
@@ -48,7 +50,11 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p className={cn("text-sm text-slate-500", className)} ref={ref} {...props} />
+  <p
+    className={cn("text-sm leading-relaxed text-muted-foreground", className)}
+    ref={ref}
+    {...props}
+  />
 ));
 CardDescription.displayName = "CardDescription";
 
@@ -66,7 +72,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     className={cn(
-      "flex items-center border-t border-slate-100 p-6 pt-4",
+      "flex items-center border-t border-border/70 p-6 pt-4",
       className,
     )}
     ref={ref}

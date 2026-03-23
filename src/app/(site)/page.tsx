@@ -10,19 +10,8 @@ import {
   rewriteHtmlAssetRefs,
 } from "@cms/lib/page-assets";
 
-type Props = {
-  params: Promise<{ slug: string[] }>;
-};
-
-function toPathSlug(segments: string[] | undefined): string {
-  if (!segments?.length) return "home";
-  return segments.join("/").toLowerCase();
-}
-
-export async function generateMetadata({ params }: Props) {
-  const resolved = await params;
-  const slug = toPathSlug(resolved.slug);
-  const page = await getPageBySlug(slug);
+export async function generateMetadata() {
+  const page = await getPageBySlug("home");
   if (!page) {
     return { title: "Page Not Found" };
   }
@@ -36,11 +25,8 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function CmsSlugPage({ params }: Props) {
-  const resolved = await params;
-  const slug = toPathSlug(resolved.slug);
-  const page = await getPageBySlug(slug);
-
+export default async function HomePage() {
+  const page = await getPageBySlug("home");
   if (!page) notFound();
 
   const assets = parsePageAssetsJson(page.page_assets);
@@ -56,7 +42,7 @@ export default async function CmsSlugPage({ params }: Props) {
 
   return (
     <main
-      className="min-h-screen bg-white"
+      className="w-full flex-1 bg-white"
       suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: html }}
     />

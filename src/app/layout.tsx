@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { siteConfig } from "@/config/site";
@@ -13,6 +13,11 @@ const jsonLd = {
   description: siteConfig.description,
   url: siteConfig.url,
 } as const;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -44,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={fontVariables}>
-      <body className="bg-gray-50 font-sans text-gray-900 antialiased">
+      <body className="font-sans">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

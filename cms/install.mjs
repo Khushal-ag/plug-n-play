@@ -11,7 +11,7 @@
  * Options:
  *   --dry-run          Print actions only
  *   --skip-install     Do not run bun/npm to add dependencies
- *   --no-public-routes Skip copying root page, [...slug], and sitemap (admin only)
+ *   --no-public-routes Skip public site pages, sitemap, robots (still copies admin + asset routes)
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -114,6 +114,7 @@ NEXT_PUBLIC_CMS_ADMIN_BASE=/admin
 NEXT_PUBLIC_CMS_BRAND_NAME=Content Studio
 NEXT_PUBLIC_CMS_BRAND_TAGLINE=Content studio
 NEXT_PUBLIC_CMS_DEFAULT_DESCRIPTION=
+# Optional: NEXT_PUBLIC_IMAGE_HOSTS=cdn.example.com
 `.trimStart();
 
   if (!fs.existsSync(target)) {
@@ -134,6 +135,28 @@ function hintNextConfig() {
   log(
     "Ensure next.config includes: serverExternalPackages: [\"better-sqlite3\"] (merge with your existing config).",
   );
+}
+
+/** Default site chrome: editable HTML in src/partials (see cms/README.md). */
+function ensureSitePartials() {
+  const tmplDir = path.join(__dirname, "templates", "partials");
+  if (!fs.existsSync(tmplDir)) return;
+  const destDir = path.join(projectRoot, "src", "partials");
+  for (const f of ["header.html", "footer.html"]) {
+    const dest = path.join(destDir, f);
+    if (fs.existsSync(dest)) continue;
+    const src = path.join(tmplDir, f);
+    if (!fs.existsSync(src)) continue;
+    if (dryRun) {
+      log(
+        `Would create src/partials/${f} (shared header/footer for public pages)`,
+      );
+      continue;
+    }
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.copyFileSync(src, dest);
+    log(`Created src/partials/${f} (shared header/footer for public pages)`);
+  }
 }
 
 function runPackageInstall() {
@@ -208,19 +231,35 @@ function main() {
     process.exit(1);
   }
 
+  /** Needed for admin page/site asset uploads even when skipping the public site. */
+  const assetRouteDirs = ["cms-assets", "cms-global-assets"];
+
   if (noPublicRoutes) {
-    if (!dryRun) {
+    if (dryRun) {
+      log(
+        "Would copy admin/, cms-assets/, cms-global-assets/ -> src/app (skip (site), sitemap, robots)",
+      );
+    } else {
       const adminSrc = path.join(routesApp, "admin");
       const adminDest = path.join(destApp, "admin");
       copyRecursive(adminSrc, adminDest);
+      for (const dir of assetRouteDirs) {
+        const s = path.join(routesApp, dir);
+        const d = path.join(destApp, dir);
+        if (fs.existsSync(s)) copyRecursive(s, d);
+      }
     }
-    log("Copied admin routes only -> src/app/admin");
+    if (!dryRun) {
+      log("Copied admin + asset API routes -> src/app (no public pages)");
+    }
   } else if (!dryRun) {
     copyRecursive(routesApp, destApp);
     log("Copied routes -> src/app");
   } else {
     log("Would copy routes -> src/app");
   }
+
+  ensureSitePartials();
 
   mergeTsconfigPaths();
   writeDrizzleConfig();

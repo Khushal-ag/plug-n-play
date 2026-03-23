@@ -5,7 +5,7 @@ import { Button } from "@cms/components/ui/button";
 import { cmsAdminBasePath } from "@cms/config";
 import { createPageAction } from "@cms/data/page-actions";
 import { getSiteAssetsMap } from "@cms/data/site-assets";
-import { PageEditor } from "@cms/ui/admin/page-editor";
+import { PageEditorDynamic } from "@cms/ui/admin/admin-client-dynamic";
 import { ChevronLeft } from "lucide-react";
 
 export default async function NewPage() {
@@ -16,27 +16,24 @@ export default async function NewPage() {
   const listHref = `${cmsAdminBasePath}/dashboard`;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <Button asChild className="mb-4 h-auto p-0" variant="link">
+        <Button
+          asChild
+          className="mb-3 h-auto p-0 text-muted-foreground"
+          variant="link"
+        >
           <Link href={listHref}>
             <ChevronLeft className="h-4 w-4" />
-            All pages
+            Pages
           </Link>
         </Button>
-        <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
-          Create
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           New page
         </h1>
-        <p className="mt-1 max-w-2xl text-sm text-slate-600">
-          Use the HTML editor with syntax highlighting. Switch to Split or
-          Preview to see your markup while you work.
-        </p>
       </div>
 
-      <PageEditor
+      <PageEditorDynamic
         saveAction={createPageAction}
         siteWideAssets={siteWideAssets}
         submitLabel="Create page"

@@ -54,7 +54,7 @@ export function KeywordsInput({
     <div className="space-y-2">
       <input name={name} type="hidden" value={keywords.join(",")} />
 
-      <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+      <div className="flex min-h-11 flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-2">
         {keywords.length > 0 ?
           keywords.map((keyword) => (
             <Badge
@@ -62,10 +62,10 @@ export function KeywordsInput({
               key={keyword}
               variant="secondary"
             >
-              <span className="max-w-[180px] truncate">{keyword}</span>
+              <span className="max-w-45 truncate">{keyword}</span>
               <button
                 aria-label={`Remove ${keyword}`}
-                className="rounded p-0.5 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700"
+                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 onClick={() => removeKeyword(keyword)}
                 type="button"
               >
@@ -73,7 +73,10 @@ export function KeywordsInput({
               </button>
             </Badge>
           ))
-        : <span className="text-xs text-slate-400">{placeholder}</span>}
+        : <span className="text-xs text-muted-foreground/70">
+            {placeholder}
+          </span>
+        }
       </div>
 
       <Input
@@ -101,9 +104,6 @@ export function KeywordsInput({
         placeholder={placeholder}
         value={draft}
       />
-      <p className="text-xs text-slate-500">
-        Press Enter or comma to add. Click X to remove.
-      </p>
     </div>
   );
 }

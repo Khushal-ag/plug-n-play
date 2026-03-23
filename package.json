@@ -8,14 +8,16 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:fresh": "bun run clean && next dev --turbopack",
+    "dev:webpack": "next dev",
     "build": "next build",
     "start": "next start",
     "preview": "next build && next start",
     "lint": "eslint . && tsc --noEmit",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
-    "fmt:check": "prettier --check \"**/*.{ts,tsx,mdx,json}\" \"README.md\" \"docs/**/*.md\" --cache",
-    "fmt": "prettier --write \"**/*.{ts,tsx,mdx,json}\" \"README.md\" \"docs/**/*.md\" --cache --experimental-ternaries",
+    "fmt:check": "prettier --check \"**/*.{ts,tsx,mdx,json}\" \"README.md\" \"cms/**/*.md\" --cache",
+    "fmt": "prettier --write \"**/*.{ts,tsx,mdx,json}\" \"README.md\" \"cms/**/*.md\" --cache --experimental-ternaries",
     "clean": "rm -rf .next",
     "cleani": "rm -rf .next && rm -rf node_modules && bun install",
     "db:generate": "drizzle-kit generate",
@@ -24,16 +26,7 @@
     "db:studio": "node ./node_modules/drizzle-kit/bin.cjs studio",
     "cms:sync": "node cms/sync-routes.mjs",
     "cms:install": "node cms/install.mjs",
-    "prepare": "husky",
-    "validate": "eslint . && tsc --noEmit && prettier --check \"**/*.{ts,tsx,mdx,json}\" \"README.md\" \"docs/**/*.md\" --cache && next build"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
-    ],
-    "*.{ts,tsx,mdx,json}": [
-      "prettier --write"
-    ]
+    "validate": "eslint . && tsc --noEmit && prettier --check \"**/*.{ts,tsx,mdx,json}\" \"README.md\" \"cms/**/*.md\" --cache && next build"
   },
   "dependencies": {
     "@codemirror/lang-html": "^6.4.11",
@@ -67,8 +60,6 @@
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-compiler": "^19.0.0-beta-ebf51a3-20250411",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.3.2",
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",

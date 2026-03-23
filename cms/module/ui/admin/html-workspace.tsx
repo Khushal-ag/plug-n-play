@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { Button } from "@cms/components/ui/button";
-import { Label } from "@cms/components/ui/label";
+import { Checkbox } from "@cms/components/ui/checkbox";
+import { finalizePreviewSrcDoc } from "@cms/lib/cms-html";
 import { rewriteHtmlFileLinksToSlugs } from "@cms/lib/cms-page-links";
 import { rewriteHtmlWithBlobUrls } from "@cms/lib/page-assets";
+import {
+  cardChrome,
+  innerWell,
+  softShadowSm,
+  toolClusterShadow,
+} from "@cms/lib/ui-surface";
+import { cn } from "@cms/lib/utils";
 import { html } from "@codemirror/lang-html";
 import { githubLight } from "@uiw/codemirror-theme-github";
 import CodeMirror from "@uiw/react-codemirror";
@@ -34,19 +42,44 @@ type Props = {
 
 type ViewMode = "code" | "preview";
 
+function buildIframePreviewDoc(
+  raw: string,
+  previewAssets: Record<string, string> | undefined,
+  previewLinkSlug: string | undefined,
+): { doc: string; blobUrls: string[] } {
+  if (!raw.trim()) {
+    return { doc: finalizePreviewSrcDoc(""), blobUrls: [] };
+  }
+  let text = raw;
+  if (previewLinkSlug) {
+    text = rewriteHtmlFileLinksToSlugs(text, previewLinkSlug);
+  }
+  const assets = previewAssets ?? {};
+  let processed = text;
+  const blobUrls: string[] = [];
+  if (Object.keys(assets).length > 0) {
+    const r = rewriteHtmlWithBlobUrls(text, assets);
+    processed = r.html;
+    blobUrls.push(...r.blobUrls);
+  }
+  return { doc: finalizePreviewSrcDoc(processed), blobUrls };
+}
+
 export function HtmlWorkspace({
   value,
   onChange,
   previewAssets,
   previewLinkSlug,
 }: Props) {
-  const [allowScripts, setAllowScripts] = useState(false);
+  const [allowScripts, setAllowScripts] = useState(true);
   const [editorHeight, setEditorHeight] = useState(680);
   const [isMaximized, setIsMaximized] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<ViewMode>("code");
-  const [iframeSrcDoc, setIframeSrcDoc] = useState(value);
+  const [iframeSrcDoc, setIframeSrcDoc] = useState(
+    () => buildIframePreviewDoc(value, previewAssets, previewLinkSlug).doc,
+  );
 
   const extensions = useMemo(() => [githubLight, html()], []);
   const workspaceHeight = isMaximized ? 920 : editorHeight;
@@ -56,17 +89,22 @@ export function HtmlWorkspace({
     setMounted(true);
   }, []);
 
+  /** Shorter editor on phones so the page scrolls naturally (default height is tall). */
   useEffect(() => {
-    const assets = previewAssets ?? {};
-    let text = value;
-    if (previewLinkSlug) {
-      text = rewriteHtmlFileLinksToSlugs(text, previewLinkSlug);
-    }
-    if (Object.keys(assets).length === 0) {
-      setIframeSrcDoc(text);
-      return;
-    }
-    const { html: doc, blobUrls } = rewriteHtmlWithBlobUrls(text, assets);
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    const cap = Math.min(
+      520,
+      Math.max(300, Math.round(window.innerHeight * 0.42)),
+    );
+    setEditorHeight((h) => Math.min(h, cap));
+  }, []);
+
+  useLayoutEffect(() => {
+    const { doc, blobUrls } = buildIframePreviewDoc(
+      value,
+      previewAssets,
+      previewLinkSlug,
+    );
     setIframeSrcDoc(doc);
     return () => {
       blobUrls.forEach((u) => URL.revokeObjectURL(u));
@@ -91,13 +129,23 @@ export function HtmlWorkspace({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-linear-to-b from-slate-50 to-white p-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100/70 p-1">
+      <div
+        className={cn(
+          "flex flex-col gap-3 rounded-xl border border-border/90 bg-linear-to-b from-muted/45 to-card p-2.5 sm:flex-row sm:items-center sm:justify-between",
+          cardChrome,
+        )}
+      >
+        <div
+          className={cn(
+            "inline-flex rounded-lg border border-border/90 bg-muted/50 p-1",
+            innerWell,
+          )}
+        >
           <button
             className={
               view === "code" ?
-                "inline-flex h-8 items-center gap-2 rounded-md bg-white px-3 text-xs font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200"
-              : "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium text-slate-600 hover:bg-white/70 hover:text-slate-900"
+                "inline-flex h-8 items-center gap-2 rounded-md bg-card px-3 text-xs font-semibold text-foreground shadow-sm ring-1 ring-border/80"
+              : "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-card/90 hover:text-foreground"
             }
             onClick={() => setView("code")}
             type="button"
@@ -108,8 +156,8 @@ export function HtmlWorkspace({
           <button
             className={
               view === "preview" ?
-                "inline-flex h-8 items-center gap-2 rounded-md bg-white px-3 text-xs font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200"
-              : "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium text-slate-600 hover:bg-white/70 hover:text-slate-900"
+                "inline-flex h-8 items-center gap-2 rounded-md bg-card px-3 text-xs font-semibold text-foreground shadow-sm ring-1 ring-border/80"
+              : "inline-flex h-8 items-center gap-2 rounded-md px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-card/90 hover:text-foreground"
             }
             onClick={() => setView("preview")}
             type="button"
@@ -119,87 +167,103 @@ export function HtmlWorkspace({
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
-            <Button
-              className="h-7 w-7 p-0"
-              onClick={decreaseHeight}
-              size="sm"
-              title="Decrease editor height"
-              type="button"
-              variant="ghost"
+        <div className="flex w-full max-w-full flex-col gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className={cn(
+                "flex items-center gap-1 rounded-lg border border-border/90 bg-card/80 p-1",
+                toolClusterShadow,
+              )}
             >
-              <Minus className="h-3.5 w-3.5" />
-            </Button>
-            <span className="min-w-[56px] text-center text-[11px] font-medium text-slate-600">
-              {workspaceHeight}px
-            </span>
-            <Button
-              className="h-7 w-7 p-0"
-              onClick={increaseHeight}
-              size="sm"
-              title="Increase editor height"
-              type="button"
-              variant="ghost"
+              <Button
+                className="h-7 w-7 p-0"
+                onClick={decreaseHeight}
+                size="sm"
+                title="Decrease editor height"
+                type="button"
+                variant="ghost"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <span className="min-w-[56px] text-center text-[11px] font-medium text-muted-foreground">
+                {workspaceHeight}px
+              </span>
+              <Button
+                className="h-7 w-7 p-0"
+                onClick={increaseHeight}
+                size="sm"
+                title="Increase editor height"
+                type="button"
+                variant="ghost"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div
+              className={cn(
+                "flex items-center gap-1 rounded-lg border border-border/90 bg-card/80 p-1",
+                toolClusterShadow,
+              )}
             >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+              <Button
+                className="h-7 gap-1.5 px-2 text-[11px]"
+                onClick={() => setIsMaximized((v) => !v)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                {isMaximized ?
+                  <>
+                    <Minimize2 className="h-3.5 w-3.5" />
+                    Min
+                  </>
+                : <>
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Max
+                  </>
+                }
+              </Button>
+              <Button
+                className="h-7 gap-1.5 px-2 text-[11px]"
+                onClick={copyHtml}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copy
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
-            <Button
-              className="h-7 gap-1.5 px-2 text-[11px]"
-              onClick={() => setIsMaximized((v) => !v)}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {isMaximized ?
-                <>
-                  <Minimize2 className="h-3.5 w-3.5" />
-                  Min
-                </>
-              : <>
-                  <Maximize2 className="h-3.5 w-3.5" />
-                  Max
-                </>
-              }
-            </Button>
-            <Button
-              className="h-7 gap-1.5 px-2 text-[11px]"
-              onClick={copyHtml}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              <Copy className="h-3.5 w-3.5" />
-              Copy
-            </Button>
-          </div>
-          <Label className="ml-1 flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600 normal-case">
-            <input
-              checked={allowScripts}
-              className="rounded border-slate-300 text-slate-900 focus:ring-slate-400"
-              onChange={(e) => setAllowScripts(e.target.checked)}
-              type="checkbox"
-            />
-            Allow scripts
-          </Label>
+          <Checkbox
+            checked={allowScripts}
+            className="gap-2 max-sm:w-full max-sm:border-t max-sm:border-border/50 max-sm:pt-2 sm:ml-1"
+            id="preview-allow-scripts"
+            label="Run scripts in preview"
+            labelClassName="text-xs font-medium text-muted-foreground normal-case"
+            onChange={(e) => setAllowScripts(e.target.checked)}
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         {view === "code" ?
-          <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="absolute top-2 right-2 z-10 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          <div
+            className={cn(
+              "group relative overflow-hidden rounded-xl border border-border/90 bg-card",
+              cardChrome,
+            )}
+          >
+            <div className="absolute top-2 right-2 z-10 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100">
               <Button
-                className="h-7 gap-1 rounded-md border border-slate-200 bg-white/95 px-2 text-[11px] shadow-sm"
+                className="h-7 gap-1 rounded-md border border-border bg-card/95 px-2 text-[11px] shadow-sm"
                 onClick={() => setPreviewOpen(true)}
                 size="sm"
                 type="button"
                 variant="ghost"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Overlay
+                Bigger preview
               </Button>
             </div>
             <CodeMirror
@@ -210,14 +274,19 @@ export function HtmlWorkspace({
               value={value}
             />
           </div>
-        : <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80 shadow-inner">
-            <div className="border-b border-slate-200 bg-white px-3 py-2">
-              <p className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+        : <div
+            className={cn(
+              "flex flex-col overflow-hidden rounded-xl border border-border/90 bg-muted/25 ring-1 ring-slate-900/3",
+              innerWell,
+            )}
+          >
+            <div className="border-b border-border/80 bg-card/95 px-3 py-2.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                 <FileCode2 className="h-3.5 w-3.5" />
-                Live preview
+                Preview
               </p>
             </div>
-            <div className="relative min-h-0 flex-1 bg-white">
+            <div className="relative min-h-0 flex-1 bg-card">
               <iframe
                 className="w-full"
                 sandbox={
@@ -225,10 +294,7 @@ export function HtmlWorkspace({
                     "allow-scripts allow-same-origin"
                   : "allow-same-origin"
                 }
-                srcDoc={
-                  iframeSrcDoc ||
-                  "<p style='padding:1rem;color:#64748b'>No HTML yet.</p>"
-                }
+                srcDoc={iframeSrcDoc}
                 style={{ height: workspaceHeightPx }}
                 title="HTML preview"
               />
@@ -237,17 +303,16 @@ export function HtmlWorkspace({
         }
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
-        <p className="text-[11px] font-semibold tracking-wide text-slate-700 uppercase">
-          Preview note
-        </p>
-        <p className="mt-1 text-xs text-slate-600">
-          Uploaded CSS/JS is applied in preview via temporary URLs. On the live
-          site, files are served from{" "}
-          <code className="rounded bg-slate-100 px-1">/cms-assets/…</code>.
-          Scripts run only when{" "}
-          <span className="font-medium text-slate-800">Allow scripts</span> is
-          enabled.
+      <div
+        className={cn(
+          "rounded-xl border border-border/85 bg-muted/35 px-3.5 py-2.5",
+          softShadowSm,
+        )}
+      >
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Preview is approximate. Enable{" "}
+          <span className="font-medium text-foreground">scripts</span> only for
+          trusted code.
         </p>
       </div>
 
@@ -256,14 +321,14 @@ export function HtmlWorkspace({
           <>
             <button
               aria-label="Close preview overlay"
-              className="fixed inset-0 z-90 bg-slate-900/45 backdrop-blur-[1px]"
+              className="fixed inset-0 z-90 bg-foreground/35 backdrop-blur-sm"
               onClick={() => setPreviewOpen(false)}
               type="button"
             />
-            <aside className="fixed inset-3 z-100 rounded-xl border border-slate-200 bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Live preview
+            <aside className="fixed inset-2 z-100 flex flex-col overflow-hidden rounded-xl border border-border/90 bg-card shadow-2xl ring-1 shadow-slate-900/20 ring-slate-900/6 sm:inset-3 md:inset-6">
+              <div className="flex shrink-0 items-center justify-between border-b border-border/80 bg-muted/15 px-4 py-3">
+                <p className="text-sm font-semibold tracking-tight text-foreground">
+                  Preview
                 </p>
                 <Button
                   onClick={() => setPreviewOpen(false)}
@@ -274,7 +339,7 @@ export function HtmlWorkspace({
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="h-[calc(100%-57px)] bg-white">
+              <div className="min-h-0 flex-1 bg-card">
                 <iframe
                   className="h-full w-full"
                   sandbox={
@@ -282,10 +347,7 @@ export function HtmlWorkspace({
                       "allow-scripts allow-same-origin"
                     : "allow-same-origin"
                   }
-                  srcDoc={
-                    iframeSrcDoc ||
-                    "<p style='padding:1rem;color:#64748b'>No HTML yet.</p>"
-                  }
+                  srcDoc={iframeSrcDoc}
                   title="HTML preview"
                 />
               </div>

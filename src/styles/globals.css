@@ -1,10 +1,30 @@
 @import "tailwindcss";
 @import "tailwind-animate";
 
+/* Refined light UI — warm paper canvas, crisp cards, blue-violet accent */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  --color-background: oklch(0.982 0.007 85);
+  --color-foreground: oklch(0.2 0.024 264);
+  --color-card: oklch(0.998 0.003 85);
+  --color-card-foreground: oklch(0.2 0.024 264);
+  --color-muted: oklch(0.958 0.01 264);
+  --color-muted-foreground: oklch(0.42 0.022 264);
+  --color-border: oklch(0.905 0.014 264);
+  --color-primary: oklch(0.42 0.13 264);
+  --color-primary-foreground: oklch(0.995 0.002 264);
+  --color-accent: oklch(0.952 0.028 264);
+  --color-accent-foreground: oklch(0.26 0.065 264);
+  --color-destructive: oklch(0.52 0.2 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-ring: oklch(0.44 0.12 264);
+  --color-success: oklch(0.46 0.12 158);
+  --color-success-foreground: oklch(0.22 0.06 158);
+  --color-warning: oklch(0.56 0.12 72);
+  --color-warning-foreground: oklch(0.3 0.07 72);
 }
 
 @layer base {
@@ -12,6 +32,15 @@
     margin-inline: auto;
     padding-inline: 1rem;
     max-width: 1280px;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    background-color: oklch(0.42 0.13 264 / 0.16);
+    color: oklch(0.2 0.024 264);
   }
 }
 

@@ -85,7 +85,7 @@ function replaceRefsToFile(
   const re = escapeRegExp(filename);
   return html.replace(
     new RegExp(
-      `\\b(href|src)=(["'])(?:\\.\\.\\/)*(?:\\.\\/)*(?:[\\w.-]+\\/)*${re}\\2`,
+      `\\b(href|src)\\s*=\\s*(["'])(?:\\.\\.\\/)*(?:\\.\\/)*(?:[\\w.-]+\\/)*${re}\\2`,
       "gi",
     ),
     (_match, attr: string, quote: string) =>

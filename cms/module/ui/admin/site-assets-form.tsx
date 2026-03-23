@@ -40,23 +40,16 @@ export function SiteAssetsForm({ initialJson }: Props) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Shared files</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle>Library</CardTitle>
         <CardDescription>
-          Public URLs look like{" "}
-          <code className="rounded bg-slate-100 px-1">
-            /cms-global-assets/your-file.css
-          </code>
-          . Total library up to{" "}
-          {Math.round(SITE_ASSETS_MAX_TOTAL_BYTES / (1024 * 1024))} MB. Upload
-          many files at once (or a folder), wait for processing to finish, then
-          click <strong>Save site library</strong> (upload alone does not write
-          to the database).
+          Save after uploading · max ~{" "}
+          {Math.round(SITE_ASSETS_MAX_TOTAL_BYTES / (1024 * 1024))} MB total
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <form
-          className="space-y-6"
+          className="space-y-5"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData();
@@ -66,7 +59,7 @@ export function SiteAssetsForm({ initialJson }: Props) {
         >
           {state.error ?
             <p
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+              className="rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive"
               role="alert"
             >
               {state.error}
@@ -75,14 +68,14 @@ export function SiteAssetsForm({ initialJson }: Props) {
           <PageAssetsField
             assets={assets}
             formFieldName="siteAssets"
-            heading="Files in this library"
+            heading="Shared files"
             onChange={setAssets}
           />
           <Button disabled={isPending} type="submit">
             {isPending ?
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             : null}
-            Save site library
+            Save
           </Button>
         </form>
       </CardContent>

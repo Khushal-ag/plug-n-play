@@ -11,9 +11,13 @@ Next.js **App Router** CMS: SQLite, HTML pages, admin. Code in **`cms/module`**;
 
 After editing anything under **`cms/routes/app`**, run **`bun run cms:sync`** so `src/app` stays in sync.
 
+**Admin hydration warning in dev:** With Turbopack, the server bundle can briefly lag behind the client after many UI edits, which triggers React hydration warnings. The admin sidebar and page editor load **client-only** to avoid that drift. If you still see mismatches elsewhere, run **`bun run dev:fresh`** (clears `.next`) or try **`bun run dev:webpack`** (no Turbopack).
+
+**Layout:** The default public layout can load **`src/partials/header.html`** and **`footer.html`** (install may create them). You can change or drop that pattern—CMS page HTML is whatever you store per page (snippet or full page), depending on your layout.
+
 ## Another project
 
-Copy the **`cms/`** folder into the project root, run **`node cms/install.mjs`**, then follow **`docs/INTEGRATION.md`**.
+Copy the **`cms/`** folder into the project root, run **`node cms/install.mjs`**, then follow **`cms/README.md`** (full embed guide — it lives inside **`cms/`**).
 
 ## `next.config`
 
@@ -27,6 +31,8 @@ Copy the **`cms/`** folder into the project root, run **`node cms/install.mjs`**
 | `bun run cms:sync`    | `cms/routes/app` → `src/app`                 |
 | `bun run cms:install` | Run `cms/install.mjs`                        |
 | `bun run db:push`     | Apply Drizzle schema to SQLite               |
+| `bun run dev:fresh`   | Clear `.next` then `next dev --turbopack`    |
+| `bun run dev:webpack` | `next dev` without Turbopack                 |
 | `bun run validate`    | ESLint + TypeScript + Prettier check + build |
 
-Full env options and asset behavior: **`docs/INTEGRATION.md`**.
+Embed another app: **`cms/README.md`**.

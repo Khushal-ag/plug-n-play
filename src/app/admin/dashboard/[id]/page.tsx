@@ -7,7 +7,7 @@ import { cmsAdminBasePath } from "@cms/config";
 import { updatePageAction } from "@cms/data/page-actions";
 import { getPageById } from "@cms/data/pages";
 import { getSiteAssetsMap } from "@cms/data/site-assets";
-import { PageEditor } from "@cms/ui/admin/page-editor";
+import { PageEditorDynamic } from "@cms/ui/admin/admin-client-dynamic";
 import { ChevronLeft } from "lucide-react";
 
 type Props = {
@@ -26,28 +26,31 @@ export default async function EditPage({ params }: Props) {
   const listHref = `${cmsAdminBasePath}/dashboard`;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <Button asChild className="mb-4 h-auto p-0" variant="link">
+        <Button
+          asChild
+          className="mb-3 h-auto p-0 text-muted-foreground"
+          variant="link"
+        >
           <Link href={listHref}>
             <ChevronLeft className="h-4 w-4" />
-            All pages
+            Pages
           </Link>
         </Button>
-        <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
-          Edit
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {page.title}
         </h1>
-        <p className="mt-1 font-mono text-sm text-slate-500">/{page.slug}</p>
+        <p className="mt-1 font-mono text-sm text-muted-foreground">
+          /{page.slug}
+        </p>
       </div>
 
-      <PageEditor
+      <PageEditorDynamic
         initial={page}
         saveAction={updatePageAction}
         siteWideAssets={siteWideAssets}
-        submitLabel="Save changes"
+        submitLabel="Save"
       />
     </div>
   );

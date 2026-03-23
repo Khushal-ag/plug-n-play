@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@cms/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@cms/components/ui/card";
+import { Checkbox } from "@cms/components/ui/checkbox";
 import { Input } from "@cms/components/ui/input";
 import { Label } from "@cms/components/ui/label";
 import {
@@ -17,12 +18,13 @@ import {
   parsePageAssetsJson,
   serializePageAssets,
 } from "@cms/lib/page-assets";
+import { cardChrome } from "@cms/lib/ui-surface";
+import { cn } from "@cms/lib/utils";
 import { EditorTips } from "@cms/ui/admin/editor-tips";
 import { HtmlWorkspace } from "@cms/ui/admin/html-workspace";
 import { KeywordsInput } from "@cms/ui/admin/keywords-input";
 import { PageAssetsField } from "@cms/ui/admin/page-assets-field";
-import { Loader2, PanelRightOpen, X } from "lucide-react";
-import { createPortal } from "react-dom";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 import type { PageRow } from "@cms/data/pages";
 import type { FormEvent } from "react";
@@ -33,7 +35,6 @@ type Props = {
   saveAction: SaveAction;
   submitLabel: string;
   initial?: PageRow;
-  /** Site-wide library (for preview); page uploads override same filenames */
   siteWideAssets?: Record<string, string>;
 };
 
@@ -41,16 +42,17 @@ export function PageEditor({
   saveAction,
   submitLabel,
   initial,
-  siteWideAssets = {},
+  siteWideAssets,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [html, setHtml] = useState(initial?.html ?? "");
   const [pageAssets, setPageAssets] = useState<Record<string, string>>(() =>
     parsePageAssetsJson(initial?.page_assets),
   );
-  const [workflowOpen, setWorkflowOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
+  const previewMergedAssets = useMemo(
+    () => mergeAssetMaps(siteWideAssets ?? {}, pageAssets),
+    [siteWideAssets, pageAssets],
+  );
   useEffect(() => {
     setHtml(initial?.html ?? "");
   }, [initial?.html, initial?.id]);
@@ -58,10 +60,6 @@ export function PageEditor({
   useEffect(() => {
     setPageAssets(parsePageAssetsJson(initial?.page_assets));
   }, [initial?.page_assets, initial?.id]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -75,30 +73,25 @@ export function PageEditor({
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
       {initial ?
         <input name="id" type="hidden" value={initial.id} />
       : null}
 
-      <div className="sticky top-0 z-30 -mx-2 mb-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:mx-0">
+      <div
+        className={cn(
+          "mb-1 rounded-xl border border-border/90 bg-card px-3 py-3 sm:mb-2",
+          cardChrome,
+        )}
+      >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex cursor-pointer items-start gap-3 sm:items-center">
-            <input
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400 sm:mt-0"
-              defaultChecked={initial ? initial.is_published === 1 : true}
-              name="isPublished"
-              type="checkbox"
-            />
-            <span>
-              <span className="block text-sm font-medium text-slate-900">
-                Published
-              </span>
-              <span className="text-xs text-slate-500">
-                Unpublished pages are hidden from public routes.
-              </span>
-            </span>
-          </label>
-          <Button className="min-w-[140px]" disabled={pending} type="submit">
+          <Checkbox
+            className="gap-3 py-1"
+            defaultChecked={initial ? initial.is_published === 1 : true}
+            label="Visible on site"
+            name="isPublished"
+          />
+          <Button className="min-w-[132px]" disabled={pending} type="submit">
             {pending ?
               <Loader2 className="h-4 w-4 animate-spin" />
             : null}
@@ -108,47 +101,47 @@ export function PageEditor({
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <div>
-            <CardTitle>Page content</CardTitle>
-            <CardDescription>
-              Primary editing workspace. Use Split or Preview to validate
-              layout.
-            </CardDescription>
-          </div>
-          <Button
-            className="shrink-0"
-            onClick={() => setWorkflowOpen(true)}
-            type="button"
-            variant="secondary"
-          >
-            <PanelRightOpen className="h-4 w-4" />
-            Workflow
-          </Button>
+        <CardHeader className="pb-3">
+          <CardTitle>Content</CardTitle>
+          <CardDescription>
+            HTML stored for this page. Put a <strong>snippet</strong>, a{" "}
+            <strong>section</strong>, or a <strong>full document</strong>
+            —whatever matches how your site is built.
+          </CardDescription>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The public site may wrap this in shared layout pieces, or show it as
+            you wrote it. That comes from your project&apos;s app routes and
+            layout—not from rules in this editor.
+          </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3 pt-0">
           <HtmlWorkspace
             onChange={setHtml}
-            previewAssets={mergeAssetMaps(siteWideAssets, pageAssets)}
+            previewAssets={previewMergedAssets}
             previewLinkSlug={initial?.slug}
             value={html}
           />
+          <details className="group rounded-xl border border-border/80 bg-muted/35">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+              Tips
+            </summary>
+            <div className="border-t border-border/60 px-3 py-2.5">
+              <EditorTips />
+            </div>
+          </details>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Page assets</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle>Page files</CardTitle>
           <CardDescription>
-            Files attached only to this page. If the name matches{" "}
-            <strong>Site assets</strong>, the <strong>page</strong> file wins
-            for this page. Use relative{" "}
-            <code className="rounded bg-slate-100 px-1">href</code> /{" "}
-            <code className="rounded bg-slate-100 px-1">src</code> (e.g.{" "}
-            <code className="rounded bg-slate-100 px-1">style.css</code>).
+            Match filenames used in your HTML · overrides shared library for
+            this page only
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <PageAssetsField
             assets={pageAssets}
             key={initial?.id ?? "new-page"}
@@ -157,27 +150,26 @@ export function PageEditor({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Page details</CardTitle>
-            <CardDescription>Title and URL slug</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle>URL &amp; title</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-5">
+          <CardContent className="grid gap-4 pt-0">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
                 defaultValue={initial?.title}
                 id="title"
                 name="title"
-                placeholder="e.g. Product overview"
+                placeholder="Page title"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">URL slug</Label>
-              <div className="flex rounded-lg border border-slate-200 bg-white shadow-sm focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-200">
-                <span className="flex items-center border-r border-slate-200 px-3 text-sm text-slate-400">
+              <Label htmlFor="slug">Slug</Label>
+              <div className="flex rounded-lg border border-border bg-card shadow-sm focus-within:border-primary/35 focus-within:ring-2 focus-within:ring-ring/20">
+                <span className="flex items-center border-r border-border px-3 text-sm text-muted-foreground">
                   /
                 </span>
                 <Input
@@ -185,83 +177,43 @@ export function PageEditor({
                   defaultValue={initial?.slug}
                   id="slug"
                   name="slug"
-                  placeholder="product-overview"
+                  placeholder="about"
                   required
                 />
               </div>
-              <p className="text-xs text-slate-500">
-                Slug{" "}
-                <code className="rounded bg-slate-100 px-1 text-slate-700">
-                  home
-                </code>{" "}
-                also maps to root{" "}
-                <code className="rounded bg-slate-100 px-1 text-slate-700">
-                  /
-                </code>
-                .
+              <p className="text-xs text-muted-foreground">
+                Use <code className="rounded bg-muted px-1">home</code> for /
               </p>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle>SEO</CardTitle>
-            <CardDescription>Search and sharing metadata</CardDescription>
+            <CardDescription>Optional</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-5">
+          <CardContent className="grid gap-4 pt-0">
             <div className="space-y-2">
-              <Label htmlFor="metaDescription">Meta description</Label>
+              <Label htmlFor="metaDescription">Description</Label>
               <Input
                 defaultValue={initial?.meta_description ?? ""}
                 id="metaDescription"
                 name="metaDescription"
-                placeholder="Shown in search results (~150–160 characters)"
+                placeholder="~150 characters"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="metaKeywords">Meta keywords</Label>
+              <Label htmlFor="metaKeywords">Keywords</Label>
               <KeywordsInput
                 initialValue={initial?.meta_keywords ?? ""}
                 name="metaKeywords"
-                placeholder="Type keyword and press Enter"
+                placeholder="Add, Enter"
               />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {mounted && workflowOpen ?
-        createPortal(
-          <>
-            <button
-              aria-label="Close workflow panel"
-              className="fixed inset-0 z-90 bg-slate-900/35 backdrop-blur-[1px]"
-              onClick={() => setWorkflowOpen(false)}
-              type="button"
-            />
-            <aside className="fixed inset-y-0 right-0 z-100 w-full max-w-md border-l border-slate-200 bg-white shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                <p className="text-sm font-semibold text-slate-900">
-                  Editorial workflow
-                </p>
-                <Button
-                  onClick={() => setWorkflowOpen(false)}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="h-[calc(100dvh-57px)] overflow-y-auto p-5">
-                <EditorTips />
-              </div>
-            </aside>
-          </>,
-          document.body,
-        )
-      : null}
     </form>
   );
 }

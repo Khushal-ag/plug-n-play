@@ -16,7 +16,7 @@ import {
 import { Input } from "@cms/components/ui/input";
 import { Label } from "@cms/components/ui/label";
 import { cmsAdminBasePath, cmsBrandName } from "@cms/config";
-import { Lock, Sparkles } from "lucide-react";
+import { LayoutDashboard, Lock } from "lucide-react";
 
 import type { Metadata } from "next";
 
@@ -38,42 +38,27 @@ export default async function AdminLoginPage({ searchParams }: Props) {
   const hasError = params.error === "invalid";
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-16">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-12">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgb(226 232 240 / 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgb(226 232 240 / 0.5) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_-10%,oklch(0.97_0.04_264/0.22)_0%,transparent_55%),linear-gradient(180deg,oklch(0.99_0.014_264/0.4)_0%,transparent_45%),linear-gradient(168deg,oklch(0.986_0.022_85/0.55)_0%,transparent_52%)]"
       />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-white to-transparent"
-      />
-
-      <div className="relative w-full max-w-md">
-        <div className="mb-10 text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <Sparkles className="h-7 w-7 text-slate-800" />
+      <div className="relative w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+            <LayoutDashboard className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
             {cmsBrandName}
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Sign in to manage pages and content
-          </p>
         </div>
 
-        <Card className="shadow-md">
+        <Card className="border-border/90 shadow-lg shadow-slate-900/6">
           <CardHeader>
-            <CardTitle>Admin access</CardTitle>
-            <CardDescription>
-              Enter the password from your environment configuration.
-            </CardDescription>
+            <CardTitle>Sign in</CardTitle>
+            <CardDescription>Enter your admin password</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4">
             {hasError ?
               <Alert variant="destructive">
                 <Lock />
@@ -88,7 +73,7 @@ export default async function AdminLoginPage({ searchParams }: Props) {
               </Alert>
             : null}
 
-            <form action={loginAction} className="space-y-5">
+            <form action={loginAction} className="space-y-4">
               <div className="space-y-2">
                 <Label className="normal-case" htmlFor="password">
                   Password
@@ -97,20 +82,20 @@ export default async function AdminLoginPage({ searchParams }: Props) {
                   autoComplete="current-password"
                   id="password"
                   name="password"
-                  placeholder="Enter admin password"
+                  placeholder="Password"
                   required
                   type="password"
                 />
               </div>
-              <Button className="w-full rounded-xl py-6" type="submit">
+              <Button className="w-full" type="submit">
                 <Lock className="h-4 w-4" />
-                Continue to studio
+                Sign in
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-center border-t border-slate-100 pt-6">
+          <CardFooter className="flex justify-center">
             <Button asChild variant="link">
-              <Link href="/">View public site</Link>
+              <Link href="/">Back to site</Link>
             </Button>
           </CardFooter>
         </Card>

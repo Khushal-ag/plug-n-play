@@ -144,11 +144,11 @@ export function PageAssetsField({
       />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <Label className="text-sm font-medium">
-            {heading ?? "Page assets (CSS, JS, images)"}
+          <Label className="text-sm font-medium normal-case">
+            {heading ?? "Files"}
           </Label>
           {names.length > 0 ?
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               {names.length} file{names.length === 1 ? "" : "s"} · {totalKb} KB
             </span>
           : null}
@@ -206,7 +206,7 @@ export function PageAssetsField({
       <div
         className={cn(
           "rounded-lg border-2 border-dashed px-3 py-4 text-center transition-colors",
-          dragOver ? "border-slate-400 bg-slate-50" : "border-slate-200",
+          dragOver ? "border-primary/50 bg-primary/5" : "border-border",
           processing && "pointer-events-none opacity-60",
         )}
         onDragLeave={(e) => {
@@ -225,55 +225,49 @@ export function PageAssetsField({
           void ingestFileList(e.dataTransfer.files);
         }}
       >
-        <p className="text-xs text-slate-600">
-          <strong>Drop files here</strong> or use Upload / Folder. Multi-select
-          in the file dialog is supported (Shift/Cmd).
+        <p className="text-xs text-muted-foreground">
+          Drop files or <strong className="text-foreground">Upload</strong>
         </p>
       </div>
 
       {lastMessage ?
-        <p className="text-xs text-slate-600">{lastMessage}</p>
+        <p className="text-xs text-muted-foreground">{lastMessage}</p>
       : null}
 
-      <p className="text-xs text-slate-500">
-        Wait for uploads to finish before <strong>Save</strong> — large images
-        are read in parallel. Use the same filenames your HTML references (e.g.{" "}
-        <code className="rounded bg-slate-100 px-1">banner1.jpg</code> for{" "}
-        <code className="rounded bg-slate-100 px-1">img/banner1.jpg</code>).
+      <p className="text-xs text-muted-foreground">
+        Filenames must match HTML references · save the page when done
       </p>
 
       {names.length === 0 ?
-        <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-          No extra files yet. Paste HTML that links to CSS, JS, or images, then
-          add those files here.
+        <p className="rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
+          No uploads yet
         </p>
       : <details
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+          className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
           onToggle={(e) => {
             setFileListOpen((e.currentTarget as HTMLDetailsElement).open);
           }}
           open={fileListOpen}
         >
-          <summary className="cursor-pointer list-none px-3 py-2 text-sm font-medium text-slate-700 [&::-webkit-details-marker]:hidden">
+          <summary className="cursor-pointer list-none px-3 py-2.5 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
             <span className="inline-flex w-full items-center justify-between gap-2">
-              File list
-              <span className="text-xs font-normal text-slate-500">
-                {names.length} file{names.length === 1 ? "" : "s"} · click to
-                collapse
+              Files
+              <span className="text-xs font-normal text-muted-foreground">
+                {names.length} · toggle
               </span>
             </span>
           </summary>
-          <div className="max-h-[min(36rem,70dvh)] min-h-0 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain border-t border-slate-100 [scrollbar-gutter:stable]">
-            <ul className="divide-y divide-slate-200">
+          <div className="max-h-[min(36rem,70dvh)] min-h-0 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain border-t border-border/70 [scrollbar-gutter:stable]">
+            <ul className="divide-y divide-border/70">
               {names.map((name) => (
                 <li
                   className="flex items-center justify-between gap-2 px-3 py-2 text-sm"
                   key={name}
                 >
-                  <span className="truncate font-mono text-xs text-slate-800">
+                  <span className="truncate font-mono text-xs text-foreground">
                     {name}
                   </span>
-                  <span className="shrink-0 text-xs text-slate-400">
+                  <span className="shrink-0 text-xs text-muted-foreground">
                     {(byteLength(assets[name] ?? "") / 1024).toFixed(1)} KB
                   </span>
                   <Button
@@ -284,7 +278,7 @@ export function PageAssetsField({
                     type="button"
                     variant="ghost"
                   >
-                    <Trash2 className="h-4 w-4 text-slate-500" />
+                    <Trash2 className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </li>
               ))}

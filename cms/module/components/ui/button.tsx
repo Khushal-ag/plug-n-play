@@ -7,18 +7,20 @@ import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-[color,background-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-98 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-slate-900 text-white shadow-sm hover:bg-slate-800",
+        default:
+          "bg-primary text-primary-foreground shadow-sm shadow-primary/25 hover:bg-primary/92 hover:shadow-md hover:shadow-primary/20",
         secondary:
-          "border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50",
-        ghost: "text-slate-700 hover:bg-slate-100",
-        destructive: "bg-red-600 text-white hover:bg-red-700",
+          "border border-border/90 bg-card text-foreground shadow-sm shadow-slate-900/3.5 ring-1 ring-slate-900/2 hover:bg-muted/85",
+        ghost: "text-foreground hover:bg-muted/75",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
-        link: "text-slate-900 underline-offset-4 hover:underline",
+          "border border-border/95 bg-card/40 text-foreground shadow-sm shadow-slate-900/2 hover:border-border hover:bg-muted/65 hover:shadow-md hover:shadow-slate-900/4",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",

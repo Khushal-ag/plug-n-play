@@ -11,8 +11,9 @@ import {
 } from "@cms/components/ui/card";
 import { cmsAdminBasePath } from "@cms/config";
 import { listPages } from "@cms/data/pages";
+import { formatDashboardUpdatedAt } from "@cms/lib/dashboard-updated-at";
 import { DashboardPagesTable } from "@cms/ui/admin/dashboard-pages-table";
-import { FileText } from "lucide-react";
+import { EyeOff, FileText, Globe, Layers } from "lucide-react";
 
 import type { DashboardPageRow } from "@cms/ui/admin/dashboard-pages-table";
 
@@ -32,25 +33,22 @@ export default async function DashboardPage() {
     title: p.title,
     slug: p.slug,
     is_published: p.is_published,
-    updated_at: p.updated_at,
+    updated_at_display:
+      p.updated_at ? formatDashboardUpdatedAt(p.updated_at) : "—",
   }));
 
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
-            Overview
-          </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Pages
           </h1>
-          <p className="mt-1 max-w-lg text-sm text-slate-600">
-            Manage HTML pages for your site. Use the editor preview to check
-            layout before publishing.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Live vs draft at a glance
           </p>
         </div>
-        <Button asChild className="rounded-xl" size="lg">
+        <Button asChild size="lg">
           <Link href={newPageHref}>
             <FileText className="h-4 w-4" />
             New page
@@ -58,52 +56,66 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total</CardDescription>
-            <CardTitle className="text-3xl tabular-nums">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 p-4 pb-1">
+            <CardDescription className="text-[11px] font-medium tracking-wide uppercase">
+              Total
+            </CardDescription>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/12">
+              <Layers className="h-3.5 w-3.5" />
+            </span>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 pb-3">
+            <CardTitle className="text-2xl font-semibold tracking-tight tabular-nums">
               {pages.length}
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-slate-500">All pages</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Live</CardDescription>
-            <CardTitle className="text-3xl text-emerald-600 tabular-nums">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 p-4 pb-1">
+            <CardDescription className="text-[11px] font-medium tracking-wide uppercase">
+              Live
+            </CardDescription>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-success/12 text-success ring-1 ring-success/18">
+              <Globe className="h-3.5 w-3.5" />
+            </span>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 pb-3">
+            <CardTitle className="text-2xl font-semibold tracking-tight text-success tabular-nums">
               {published}
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-slate-500">Published</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Drafts</CardDescription>
-            <CardTitle className="text-3xl text-amber-600 tabular-nums">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 p-4 pb-1">
+            <CardDescription className="text-[11px] font-medium tracking-wide uppercase">
+              Draft
+            </CardDescription>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-warning/14 text-warning ring-1 ring-warning/22">
+              <EyeOff className="h-3.5 w-3.5" />
+            </span>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 pb-3">
+            <CardTitle className="text-2xl font-semibold tracking-tight text-warning tabular-nums">
               {drafts}
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-slate-500">Not public</p>
           </CardContent>
         </Card>
       </div>
 
       <Card className="overflow-hidden">
         {pages.length === 0 ?
-          <CardContent className="px-5 py-16 text-center">
-            <p className="text-sm text-slate-600">No pages yet.</p>
-            <Button asChild className="mt-4" variant="link">
-              <Link href={newPageHref}>Create your first page →</Link>
+          <CardContent className="flex flex-col items-center px-5 py-14 text-center">
+            <p className="text-sm text-muted-foreground">No pages yet</p>
+            <Button asChild className="mt-3" variant="link">
+              <Link href={newPageHref}>Create one</Link>
             </Button>
           </CardContent>
-        : <CardContent className="p-5">
-            <DashboardPagesTable pages={tableRows} />
+        : <CardContent className="p-0 sm:p-1">
+            <div className="p-4 sm:p-5">
+              <DashboardPagesTable pages={tableRows} />
+            </div>
           </CardContent>
         }
       </Card>
