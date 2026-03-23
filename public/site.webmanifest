@@ -1,0 +1,9 @@
+{
+  "name": "Plug and Play CMS",
+  "short_name": "CMS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#111827",
+  "icons": []
+}

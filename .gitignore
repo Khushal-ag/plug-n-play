@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Build / output
+dist/
+build/
+*.tsbuildinfo
+
+# Env & secrets (never commit real credentials)
+.env
+.env.*
+!.env.example
+
+# Local data (SQLite, uploads, etc.)
+data/
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+
+# Caches & tooling
+.eslintcache
+.prettiercache
+.turbo/
+.cache/
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editors (personal; commit shared .vscode if your team uses it)
+.idea/
+*.swp
+*.swo
+*~
+
+# Optional: local demo HTML (remove this line if you want `testing/` in git)
+testing/
