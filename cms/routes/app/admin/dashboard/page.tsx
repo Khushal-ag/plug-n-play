@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { requireAdmin } from "@cms/auth/session";
-import { Badge } from "@cms/components/ui/badge";
 import { Button } from "@cms/components/ui/button";
 import {
   Card,
@@ -12,8 +11,10 @@ import {
 } from "@cms/components/ui/card";
 import { cmsAdminBasePath } from "@cms/config";
 import { listPages } from "@cms/data/pages";
-import { DeletePageButton } from "@cms/ui/admin/delete-page-button";
-import { ArrowUpRight, CircleDot, FileText, Pencil } from "lucide-react";
+import { DashboardPagesTable } from "@cms/ui/admin/dashboard-pages-table";
+import { FileText } from "lucide-react";
+
+import type { DashboardPageRow } from "@cms/ui/admin/dashboard-pages-table";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,14 @@ export default async function DashboardPage() {
 
   const published = pages.filter((p) => p.is_published === 1).length;
   const drafts = pages.length - published;
+
+  const tableRows: DashboardPageRow[] = pages.map((p) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    is_published: p.is_published,
+    updated_at: p.updated_at,
+  }));
 
   return (
     <div className="space-y-10">
@@ -93,74 +102,9 @@ export default async function DashboardPage() {
               <Link href={newPageHref}>Create your first page →</Link>
             </Button>
           </CardContent>
-        : <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-xs tracking-wider text-slate-500 uppercase">
-                  <th className="px-5 py-3 font-semibold">Page</th>
-                  <th className="px-5 py-3 font-semibold">Slug</th>
-                  <th className="px-5 py-3 font-semibold">Status</th>
-                  <th className="px-5 py-3 text-right font-semibold">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pages.map((page) => (
-                  <tr
-                    className="transition-colors hover:bg-slate-50/80"
-                    key={page.id}
-                  >
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-slate-900">{page.title}</p>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        Updated{" "}
-                        {page.updated_at ?
-                          new Date(page.updated_at).toLocaleString()
-                        : "—"}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <Link
-                        className="inline-flex items-center gap-1 font-mono text-xs font-medium text-slate-700 hover:text-slate-900"
-                        href={`/${page.slug}`}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        /{page.slug}
-                        <ArrowUpRight className="h-3 w-3 opacity-60" />
-                      </Link>
-                    </td>
-                    <td className="px-5 py-4">
-                      {page.is_published === 1 ?
-                        <Badge variant="success">
-                          <CircleDot className="h-3 w-3" />
-                          Published
-                        </Badge>
-                      : <Badge variant="warning">
-                          <CircleDot className="h-3 w-3" />
-                          Draft
-                        </Badge>
-                      }
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button asChild size="sm" variant="ghost">
-                          <Link
-                            href={`${cmsAdminBasePath}/dashboard/${page.id}`}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                          </Link>
-                        </Button>
-                        <DeletePageButton id={page.id} title={page.title} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        : <CardContent className="p-5">
+            <DashboardPagesTable pages={tableRows} />
+          </CardContent>
         }
       </Card>
     </div>

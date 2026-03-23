@@ -1,45 +1,32 @@
 # CMS template
 
-Reusable CMS for **Next.js App Router**.
+Next.js **App Router** CMS: SQLite, HTML pages, admin. Code in **`cms/module`**; route entry files in **`cms/routes/app`** (synced into **`src/app`**).
 
-## Copy to another project
+## This repository
 
-1. Copy the **`cms/`** folder into your project root.
-2. Run:
+1. `bun install`
+2. Copy `.env.example` → `.env.local` and set **`ADMIN_PASSWORD`** (and URLs if not local).
+3. `bun run db:push`
+4. `bun run dev` → sign in at **`/admin`** (or `NEXT_PUBLIC_CMS_ADMIN_BASE`).
 
-```bash
-node cms/install.mjs
-```
+After editing anything under **`cms/routes/app`**, run **`bun run cms:sync`** so `src/app` stays in sync.
 
-3. Set env in `.env.local`:
+## Another project
 
-- `ADMIN_PASSWORD`
-- `CMS_DB_PATH` (optional, default `./data/cms.sqlite`)
-- `NEXT_PUBLIC_SITE_URL`
+Copy the **`cms/`** folder into the project root, run **`node cms/install.mjs`**, then follow **`docs/INTEGRATION.md`**.
 
-4. Ensure `next.config` has:
+## `next.config`
 
-```ts
-serverExternalPackages: ["better-sqlite3"];
-```
+- `serverExternalPackages: ["better-sqlite3"]`
+- For large page/site asset saves: `experimental.serverActions.bodySizeLimit` (this repo uses `"32mb"`)
 
-5. Run:
+## Scripts
 
-```bash
-bun run db:push
-bun run dev
-```
+| Command               | Purpose                                      |
+| --------------------- | -------------------------------------------- |
+| `bun run cms:sync`    | `cms/routes/app` → `src/app`                 |
+| `bun run cms:install` | Run `cms/install.mjs`                        |
+| `bun run db:push`     | Apply Drizzle schema to SQLite               |
+| `bun run validate`    | ESLint + TypeScript + Prettier check + build |
 
-- Admin: `http://localhost:3000/admin`
-
-## How it works
-
-- CMS code stays in **`cms/module`**.
-- Installer copies route entry files to **`src/app`**.
-- `@cms/*` points to **`./cms/module/*`**.
-
-## Scripts (this repo)
-
-- `bun run cms:sync` — sync `cms/routes/app` to `src/app`
-- `bun run validate` — lint + typecheck + build
-- `bun run db:push` — apply DB schema
+Full env options and asset behavior: **`docs/INTEGRATION.md`**.

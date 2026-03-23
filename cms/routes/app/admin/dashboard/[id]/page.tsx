@@ -6,6 +6,7 @@ import { Button } from "@cms/components/ui/button";
 import { cmsAdminBasePath } from "@cms/config";
 import { updatePageAction } from "@cms/data/page-actions";
 import { getPageById } from "@cms/data/pages";
+import { getSiteAssetsMap } from "@cms/data/site-assets";
 import { PageEditor } from "@cms/ui/admin/page-editor";
 import { ChevronLeft } from "lucide-react";
 
@@ -19,6 +20,8 @@ export default async function EditPage({ params }: Props) {
   const page = await getPageById(Number(id));
 
   if (!page) notFound();
+
+  const siteWideAssets = await getSiteAssetsMap();
 
   const listHref = `${cmsAdminBasePath}/dashboard`;
 
@@ -43,6 +46,7 @@ export default async function EditPage({ params }: Props) {
       <PageEditor
         initial={page}
         saveAction={updatePageAction}
+        siteWideAssets={siteWideAssets}
         submitLabel="Save changes"
       />
     </div>

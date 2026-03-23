@@ -4,11 +4,14 @@ import { requireAdmin } from "@cms/auth/session";
 import { Button } from "@cms/components/ui/button";
 import { cmsAdminBasePath } from "@cms/config";
 import { createPageAction } from "@cms/data/page-actions";
+import { getSiteAssetsMap } from "@cms/data/site-assets";
 import { PageEditor } from "@cms/ui/admin/page-editor";
 import { ChevronLeft } from "lucide-react";
 
 export default async function NewPage() {
   await requireAdmin();
+
+  const siteWideAssets = await getSiteAssetsMap();
 
   const listHref = `${cmsAdminBasePath}/dashboard`;
 
@@ -33,7 +36,11 @@ export default async function NewPage() {
         </p>
       </div>
 
-      <PageEditor saveAction={createPageAction} submitLabel="Create page" />
+      <PageEditor
+        saveAction={createPageAction}
+        siteWideAssets={siteWideAssets}
+        submitLabel="Create page"
+      />
     </div>
   );
 }

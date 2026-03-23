@@ -24,6 +24,16 @@ function resolveDbPath(): string {
   return path.resolve(/* turbopackIgnore: true */ process.cwd(), relative);
 }
 
+function migratePageAssetsColumn(sqlite: SqliteDatabase): void {
+  const cols = sqlite.prepare("PRAGMA table_info(pages)").all() as {
+    name: string;
+  }[];
+  if (cols.some((c) => c.name === "page_assets")) return;
+  sqlite.exec(
+    `ALTER TABLE pages ADD COLUMN page_assets TEXT NOT NULL DEFAULT '{}';`,
+  );
+}
+
 function ensureSchema(sqlite: SqliteDatabase): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS pages (
@@ -33,11 +43,14 @@ function ensureSchema(sqlite: SqliteDatabase): void {
       html TEXT NOT NULL,
       meta_description TEXT DEFAULT '' NOT NULL,
       meta_keywords TEXT DEFAULT '' NOT NULL,
+      page_assets TEXT DEFAULT '{}' NOT NULL,
       is_published INTEGER DEFAULT 1 NOT NULL,
       created_at TEXT DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
       updated_at TEXT DEFAULT (CURRENT_TIMESTAMP) NOT NULL
     );
   `);
+
+  migratePageAssetsColumn(sqlite);
 
   sqlite.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS pages_slug_unique ON pages (slug);
@@ -49,6 +62,19 @@ function ensureSchema(sqlite: SqliteDatabase): void {
     BEGIN
       UPDATE pages SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
     END;
+  `);
+
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS site_assets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename TEXT NOT NULL,
+      content TEXT NOT NULL,
+      updated_at TEXT DEFAULT (CURRENT_TIMESTAMP) NOT NULL
+    );
+  `);
+
+  sqlite.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS site_assets_filename_unique ON site_assets (filename);
   `);
 }
 

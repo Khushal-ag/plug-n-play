@@ -1,60 +1,58 @@
 # CMS integration
 
-## Required stack
+Embedding the **`cms/`** tree into an existing Next.js (App Router) app.
 
-- Next.js (App Router)
-- React + TypeScript
-- Node runtime (for server actions)
+## Prerequisites
 
-## Install (minimal)
+Node **≥ 20.9** (see host `package.json` `engines`), TypeScript, App Router. Examples use `bun`; use your package manager as needed.
 
-1. Copy **`cms/`** into your project root.
-2. Run from project root:
+## Steps
 
-```bash
-node cms/install.mjs
-```
+1. Copy **`cms/`** to the project root.
+2. From the project root: **`node cms/install.mjs`**  
+   Flags: **`--dry-run`** (print only), **`--skip-install`** (no dependency install), **`--no-public-routes`** (admin routes only — no public pages/sitemap copy).
+3. **`.env.local`** (see also `.env.example` the installer may append):
 
-3. Set `.env.local`:
+| Variable                              | Required | Notes                                                                                                              |
+| ------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| `ADMIN_PASSWORD`                      | yes      | Admin login                                                                                                        |
+| `NEXT_PUBLIC_SITE_URL`                | yes      | Canonical URL (metadata, sitemap)                                                                                  |
+| `CMS_DB_PATH`                         | no       | Default `./data/cms.sqlite`                                                                                        |
+| `NEXT_PUBLIC_CMS_ADMIN_BASE`          | no       | Default `/admin`                                                                                                   |
+| `NEXT_PUBLIC_CMS_BRAND_NAME`          | no       | Admin title                                                                                                        |
+| `NEXT_PUBLIC_CMS_BRAND_TAGLINE`       | no       | Admin subtitle                                                                                                     |
+| `NEXT_PUBLIC_CMS_DEFAULT_DESCRIPTION` | no       | Fallback meta description                                                                                          |
+| `NEXT_PUBLIC_IMAGE_HOSTS`             | no       | Comma-separated hostnames; enables `next/image` remote patterns in host `next.config` if merged from this template |
 
-- `ADMIN_PASSWORD`
-- `CMS_DB_PATH` (optional)
-- `NEXT_PUBLIC_SITE_URL`
-- `NEXT_PUBLIC_CMS_ADMIN_BASE` (optional, default `/admin`)
-- `NEXT_PUBLIC_CMS_BRAND_NAME` (optional)
-- `NEXT_PUBLIC_CMS_BRAND_TAGLINE` (optional)
-- `NEXT_PUBLIC_CMS_DEFAULT_DESCRIPTION` (optional)
+4. Merge into **`next.config`**: **`serverExternalPackages: ["better-sqlite3"]`**. For large HTML/asset payloads, set **`experimental.serverActions.bodySizeLimit`** (this template uses **`"32mb"`**).
+5. Apply DB schema (**`drizzle-kit push`** / your project’s **`db:push`** script), then start the app.
 
-4. Merge in `next.config`:
+When you maintain routes inside **`cms/routes/app`**, run **`node cms/sync-routes.mjs`** (or **`bun run cms:sync`**) so **`src/app`** stays updated.
 
-```ts
-serverExternalPackages: ["better-sqlite3"];
-```
+## What `install.mjs` does
 
-5. Apply schema and start:
+- Leaves CMS source under **`cms/module`**
+- Copies **`cms/routes/app`** → **`src/app`** (skips public routes if **`--no-public-routes`**)
+- Adds **`@cms/*` → `./cms/module/*`** in **`tsconfig.json`** if missing
+- Adds **`drizzle.config.ts`** if missing
+- Appends CMS env keys to **`.env.example`** if missing
+- Installs packages from **`cms/deps.json`** unless **`--skip-install`**
 
-```bash
-bun run db:push
-bun run dev
-```
+## Page assets
 
-Open `/admin` and create pages.
+In the page editor, **Page assets**: upload files whose **names** match **`href` / `src`** (basename only, e.g. `logo.png` for `assets/logo.png`). Served from **`/cms-assets/{slug}/…`**.
 
-## What installer does
+Limits and rules are defined in **`cms/module/lib/page-assets.ts`** (e.g. **`PAGE_ASSETS_MAX_BYTES`** per page, allowed extensions, raster images as data URLs in SQLite).
 
-- keeps CMS source in `cms/module`
-- copies route files from `cms/routes/app` to `src/app`
-- adds `@cms/* -> ./cms/module/*` in `tsconfig` (if missing)
-- creates `drizzle.config.ts` (if missing)
-- appends CMS env keys to `.env.example` (if missing)
-- installs packages from `cms/deps.json`
+## Site-wide assets
 
-## Flags
+**Admin → Site assets** (`/admin/dashboard/site-assets`): shared library at **`/cms-global-assets/{filename}`**. Same basename on a **page** overrides the site file for that page. **`SITE_ASSETS_MAX_TOTAL_BYTES`** and CSS **`url(...)`** rewriting are handled in **`page-assets.ts`** and the asset routes.
 
-- `--dry-run`
-- `--skip-install`
-- `--no-public-routes` (admin routes only)
+## HTML on the public site
 
-## Keep folders separate
+- Full HTML documents are normalized for injection into the app shell (**`cms/module/lib/cms-html.ts`**).
+- **`about.html` / `index.html`-style links** are rewritten to routes when slugs match (**`cms/module/lib/cms-page-links.ts`**).
 
-Keep **`cms/`** in the project. Your site code remains in **`src/`**.
+## Git
+
+Use **`/data/`** in **`.gitignore`** (repo root only) for the SQLite directory. A rule **`data/`** without a leading slash ignores **every** `data` folder, including **`cms/module/data/`** (TypeScript — must be committed).

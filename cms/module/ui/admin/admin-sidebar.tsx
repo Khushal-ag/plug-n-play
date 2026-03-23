@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { logoutAction } from "@cms/auth/admin-actions";
 import { Button } from "@cms/components/ui/button";
+import { Input } from "@cms/components/ui/input";
 import { Separator } from "@cms/components/ui/separator";
 import { cmsAdminBasePath, cmsBrandName, cmsBrandTagline } from "@cms/config";
 import { cn } from "@cms/lib/utils";
@@ -12,6 +14,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   LogOut,
+  Package,
   PenSquare,
   Sparkles,
 } from "lucide-react";
@@ -28,10 +31,12 @@ type Props = {
 };
 
 const dashboardHref = `${cmsAdminBasePath}/dashboard`;
+const siteAssetsHref = `${cmsAdminBasePath}/dashboard/site-assets`;
 const newPageHref = `${cmsAdminBasePath}/dashboard/new`;
 
 const nav = [
   { href: dashboardHref, label: "Pages", icon: LayoutDashboard },
+  { href: siteAssetsHref, label: "Site assets", icon: Package },
   { href: newPageHref, label: "New page", icon: PenSquare },
 ] as const;
 
@@ -39,6 +44,7 @@ function isPagesNavActive(pathname: string) {
   if (pathname === dashboardHref) return true;
   if (!pathname.startsWith(`${dashboardHref}/`)) return false;
   const rest = pathname.slice(dashboardHref.length + 1);
+  if (rest === "site-assets" || rest === "new") return false;
   return /^\d+$/.test(rest);
 }
 
@@ -48,7 +54,16 @@ function isEditPageActive(pathname: string, id: number) {
 
 export function AdminSidebar({ pages }: Props) {
   const pathname = usePathname();
-  const recentPages = pages.slice(0, 10);
+  const [sidebarQuery, setSidebarQuery] = useState("");
+
+  const filteredPages = useMemo(() => {
+    const q = sidebarQuery.trim().toLowerCase();
+    if (!q) return pages;
+    return pages.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q),
+    );
+  }, [pages, sidebarQuery]);
 
   return (
     <>
@@ -85,7 +100,7 @@ export function AdminSidebar({ pages }: Props) {
         </nav>
       </header>
 
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-30 lg:flex lg:w-72 lg:flex-col lg:border-r lg:border-slate-200/80 lg:bg-white">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-slate-200/80 lg:bg-white">
         <div className="flex h-16 items-center gap-3 border-b border-slate-200/80 px-6">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
             <Sparkles className="h-5 w-5" />
@@ -125,14 +140,23 @@ export function AdminSidebar({ pages }: Props) {
           </div>
         </nav>
 
-        <div className="min-h-0 flex-1 px-4 pb-4">
+        <div className="flex min-h-0 flex-1 flex-col px-4 pb-2">
           <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
-            Created pages
+            Pages ({pages.length})
           </p>
-          {recentPages.length === 0 ?
+          <Input
+            className="mb-2 h-8 text-xs"
+            onChange={(e) => setSidebarQuery(e.target.value)}
+            placeholder="Search pages…"
+            type="search"
+            value={sidebarQuery}
+          />
+          {pages.length === 0 ?
             <p className="px-3 text-xs text-slate-500">No pages yet.</p>
-          : <div className="space-y-1 overflow-y-auto pr-1">
-              {recentPages.map((page) => {
+          : filteredPages.length === 0 ?
+            <p className="px-3 text-xs text-slate-500">No matches.</p>
+          : <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1">
+              {filteredPages.map((page) => {
                 const active = isEditPageActive(pathname, page.id);
                 return (
                   <Link
@@ -149,11 +173,11 @@ export function AdminSidebar({ pages }: Props) {
                     <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 rounded-full",
+                          "h-1.5 w-1.5 shrink-0 rounded-full",
                           page.isPublished ? "bg-emerald-500" : "bg-amber-500",
                         )}
                       />
-                      /{page.slug}
+                      <span className="truncate">/{page.slug}</span>
                     </p>
                   </Link>
                 );

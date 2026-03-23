@@ -16,6 +16,8 @@ export const pages = sqliteTable(
     html: text("html").notNull(),
     metaDescription: text("meta_description").notNull().default(""),
     metaKeywords: text("meta_keywords").notNull().default(""),
+    /** JSON map of filename -> file contents for CSS/JS linked from HTML */
+    pageAssets: text("page_assets").notNull().default("{}"),
     isPublished: integer("is_published", { mode: "number" })
       .notNull()
       .default(1),
@@ -31,3 +33,19 @@ export const pages = sqliteTable(
 
 export type PageSelect = typeof pages.$inferSelect;
 export type PageInsert = typeof pages.$inferInsert;
+
+/** Shared CSS/JS/images for all pages (unique filename). */
+export const siteAssets = sqliteTable(
+  "site_assets",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    filename: text("filename").notNull(),
+    content: text("content").notNull(),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  },
+  (table) => [uniqueIndex("site_assets_filename_unique").on(table.filename)],
+);
+
+export type SiteAssetSelect = typeof siteAssets.$inferSelect;

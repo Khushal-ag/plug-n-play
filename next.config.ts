@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: isProd,
   serverExternalPackages: ["better-sqlite3"],
+  /** Site/page asset forms send JSON + base64 images; default limit is too small */
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "32mb",
+    },
+  },
   ...(imageHostnames.length > 0 && {
     images: {
       remotePatterns: imageHostnames.map((hostname) => ({

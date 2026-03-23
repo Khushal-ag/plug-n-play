@@ -12,9 +12,15 @@ import {
 } from "@cms/components/ui/card";
 import { Input } from "@cms/components/ui/input";
 import { Label } from "@cms/components/ui/label";
+import {
+  mergeAssetMaps,
+  parsePageAssetsJson,
+  serializePageAssets,
+} from "@cms/lib/page-assets";
 import { EditorTips } from "@cms/ui/admin/editor-tips";
 import { HtmlWorkspace } from "@cms/ui/admin/html-workspace";
 import { KeywordsInput } from "@cms/ui/admin/keywords-input";
+import { PageAssetsField } from "@cms/ui/admin/page-assets-field";
 import { Loader2, PanelRightOpen, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -27,17 +33,31 @@ type Props = {
   saveAction: SaveAction;
   submitLabel: string;
   initial?: PageRow;
+  /** Site-wide library (for preview); page uploads override same filenames */
+  siteWideAssets?: Record<string, string>;
 };
 
-export function PageEditor({ saveAction, submitLabel, initial }: Props) {
+export function PageEditor({
+  saveAction,
+  submitLabel,
+  initial,
+  siteWideAssets = {},
+}: Props) {
   const [pending, startTransition] = useTransition();
   const [html, setHtml] = useState(initial?.html ?? "");
+  const [pageAssets, setPageAssets] = useState<Record<string, string>>(() =>
+    parsePageAssetsJson(initial?.page_assets),
+  );
   const [workflowOpen, setWorkflowOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setHtml(initial?.html ?? "");
   }, [initial?.html, initial?.id]);
+
+  useEffect(() => {
+    setPageAssets(parsePageAssetsJson(initial?.page_assets));
+  }, [initial?.page_assets, initial?.id]);
 
   useEffect(() => {
     setMounted(true);
@@ -48,6 +68,7 @@ export function PageEditor({ saveAction, submitLabel, initial }: Props) {
     const form = e.currentTarget;
     const fd = new FormData(form);
     fd.set("html", html);
+    fd.set("pageAssets", serializePageAssets(pageAssets));
     startTransition(() => {
       void saveAction(fd);
     });
@@ -106,7 +127,33 @@ export function PageEditor({ saveAction, submitLabel, initial }: Props) {
           </Button>
         </CardHeader>
         <CardContent>
-          <HtmlWorkspace onChange={setHtml} value={html} />
+          <HtmlWorkspace
+            onChange={setHtml}
+            previewAssets={mergeAssetMaps(siteWideAssets, pageAssets)}
+            previewLinkSlug={initial?.slug}
+            value={html}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Page assets</CardTitle>
+          <CardDescription>
+            Files attached only to this page. If the name matches{" "}
+            <strong>Site assets</strong>, the <strong>page</strong> file wins
+            for this page. Use relative{" "}
+            <code className="rounded bg-slate-100 px-1">href</code> /{" "}
+            <code className="rounded bg-slate-100 px-1">src</code> (e.g.{" "}
+            <code className="rounded bg-slate-100 px-1">style.css</code>).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PageAssetsField
+            assets={pageAssets}
+            key={initial?.id ?? "new-page"}
+            onChange={setPageAssets}
+          />
         </CardContent>
       </Card>
 

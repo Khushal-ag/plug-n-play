@@ -2,6 +2,13 @@ import { notFound } from "next/navigation";
 
 import { cmsDefaultMetaDescription, cmsSiteUrl } from "@cms/config";
 import { getPageBySlug } from "@cms/data/pages";
+import { getSiteAssetFilenames } from "@cms/data/site-assets";
+import { normalizeHtmlForMainInjection } from "@cms/lib/cms-html";
+import { rewriteHtmlFileLinksToSlugs } from "@cms/lib/cms-page-links";
+import {
+  parsePageAssetsJson,
+  rewriteHtmlAssetRefs,
+} from "@cms/lib/page-assets";
 
 export async function generateMetadata() {
   const page = await getPageBySlug("home");
@@ -22,10 +29,22 @@ export default async function HomePage() {
   const page = await getPageBySlug("home");
   if (!page) notFound();
 
+  const assets = parsePageAssetsJson(page.page_assets);
+  const globalNames = await getSiteAssetFilenames();
+  const normalized = normalizeHtmlForMainInjection(page.html);
+  const withRoutes = rewriteHtmlFileLinksToSlugs(normalized, page.slug);
+  const html = rewriteHtmlAssetRefs(
+    withRoutes,
+    page.slug,
+    Object.keys(assets),
+    globalNames,
+  );
+
   return (
     <main
       className="min-h-screen bg-white"
-      dangerouslySetInnerHTML={{ __html: page.html }}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }

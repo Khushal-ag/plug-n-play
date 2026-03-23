@@ -16,8 +16,8 @@ build/
 .env.*
 !.env.example
 
-# Local data (SQLite, uploads, etc.)
-data/
+# Local SQLite DB
+/data/
 
 # Logs & debug
 *.log

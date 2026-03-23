@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@cms/components/ui/button";
 import { Label } from "@cms/components/ui/label";
+import { rewriteHtmlFileLinksToSlugs } from "@cms/lib/cms-page-links";
+import { rewriteHtmlWithBlobUrls } from "@cms/lib/page-assets";
 import { html } from "@codemirror/lang-html";
 import { githubLight } from "@uiw/codemirror-theme-github";
 import CodeMirror from "@uiw/react-codemirror";
@@ -24,17 +26,27 @@ import { createPortal } from "react-dom";
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  /** Wired to uploaded page CSS/JS so preview resolves the same refs as the live site */
+  previewAssets?: Record<string, string>;
+  /** When set, *.html hrefs in preview match the live site (same as this page slug) */
+  previewLinkSlug?: string;
 };
 
 type ViewMode = "code" | "preview";
 
-export function HtmlWorkspace({ value, onChange }: Props) {
+export function HtmlWorkspace({
+  value,
+  onChange,
+  previewAssets,
+  previewLinkSlug,
+}: Props) {
   const [allowScripts, setAllowScripts] = useState(false);
   const [editorHeight, setEditorHeight] = useState(680);
   const [isMaximized, setIsMaximized] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<ViewMode>("code");
+  const [iframeSrcDoc, setIframeSrcDoc] = useState(value);
 
   const extensions = useMemo(() => [githubLight, html()], []);
   const workspaceHeight = isMaximized ? 920 : editorHeight;
@@ -43,6 +55,23 @@ export function HtmlWorkspace({ value, onChange }: Props) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const assets = previewAssets ?? {};
+    let text = value;
+    if (previewLinkSlug) {
+      text = rewriteHtmlFileLinksToSlugs(text, previewLinkSlug);
+    }
+    if (Object.keys(assets).length === 0) {
+      setIframeSrcDoc(text);
+      return;
+    }
+    const { html: doc, blobUrls } = rewriteHtmlWithBlobUrls(text, assets);
+    setIframeSrcDoc(doc);
+    return () => {
+      blobUrls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [value, previewAssets, previewLinkSlug]);
 
   function increaseHeight() {
     setEditorHeight((h) => Math.min(h + 80, 980));
@@ -62,7 +91,7 @@ export function HtmlWorkspace({ value, onChange }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="bg-linear-to-b from-slate-50 to-white flex flex-col gap-3 rounded-xl border border-slate-200 p-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-linear-to-b from-slate-50 to-white p-2.5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100/70 p-1">
           <button
             className={
@@ -197,7 +226,7 @@ export function HtmlWorkspace({ value, onChange }: Props) {
                   : "allow-same-origin"
                 }
                 srcDoc={
-                  value ||
+                  iframeSrcDoc ||
                   "<p style='padding:1rem;color:#64748b'>No HTML yet.</p>"
                 }
                 style={{ height: workspaceHeightPx }}
@@ -213,7 +242,10 @@ export function HtmlWorkspace({ value, onChange }: Props) {
           Preview note
         </p>
         <p className="mt-1 text-xs text-slate-600">
-          Overlay preview is close to the live page. Scripts run only when{" "}
+          Uploaded CSS/JS is applied in preview via temporary URLs. On the live
+          site, files are served from{" "}
+          <code className="rounded bg-slate-100 px-1">/cms-assets/…</code>.
+          Scripts run only when{" "}
           <span className="font-medium text-slate-800">Allow scripts</span> is
           enabled.
         </p>
@@ -251,7 +283,7 @@ export function HtmlWorkspace({ value, onChange }: Props) {
                     : "allow-same-origin"
                   }
                   srcDoc={
-                    value ||
+                    iframeSrcDoc ||
                     "<p style='padding:1rem;color:#64748b'>No HTML yet.</p>"
                   }
                   title="HTML preview"
