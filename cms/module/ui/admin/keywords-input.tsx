@@ -65,7 +65,7 @@ export function KeywordsInput({
               <span className="max-w-45 truncate">{keyword}</span>
               <button
                 aria-label={`Remove ${keyword}`}
-                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="rounded p-0.5 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground"
                 onClick={() => removeKeyword(keyword)}
                 type="button"
               >

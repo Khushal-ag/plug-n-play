@@ -1,14 +1,16 @@
-import path from "node:path";
-
 import { defineConfig } from "drizzle-kit";
 
-const dbFile = process.env.CMS_DB_PATH ?? "./data/cms.sqlite";
+const url = process.env.TURSO_DATABASE_URL;
+if (!url) {
+  throw new Error("Missing TURSO_DATABASE_URL for drizzle-kit.");
+}
 
 export default defineConfig({
   schema: "./cms/module/database/schema.ts",
   out: "./drizzle",
-  dialect: "sqlite",
+  dialect: "turso",
   dbCredentials: {
-    url: path.resolve(/* turbopackIgnore: true */ process.cwd(), dbFile),
+    url,
+    authToken: process.env.TURSO_AUTH_TOKEN,
   },
 });

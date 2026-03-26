@@ -1,12 +1,12 @@
 # CMS template
 
-Next.js **App Router** CMS: SQLite, HTML pages, admin. Code in **`cms/module`**; route entry files in **`cms/routes/app`** (synced into **`src/app`**).
+Next.js **App Router** CMS: Turso/libSQL, HTML pages, admin. Code in **`cms/module`**; route entry files in **`cms/routes/app`** (synced into **`src/app`**).
 
 ## This repository
 
 1. `bun install`
-2. Copy `.env.example` → `.env.local` and set **`ADMIN_PASSWORD`** (and URLs if not local).
-3. `bun run db:push`
+2. Copy `.env.example` → `.env.local` and set **`ADMIN_PASSWORD`**, **`TURSO_DATABASE_URL`** (and URLs if not local).
+3. Optional: `bun run db:push` (runtime bootstrap also creates tables)
 4. `bun run dev` → sign in at **`/admin`** (or `NEXT_PUBLIC_CMS_ADMIN_BASE`).
 
 After editing anything under **`cms/routes/app`**, run **`bun run cms:sync`** so `src/app` stays in sync.
@@ -21,7 +21,6 @@ Copy the **`cms/`** folder into the project root, run **`node cms/install.mjs`**
 
 ## `next.config`
 
-- `serverExternalPackages: ["better-sqlite3"]`
 - For large page/site asset saves: `experimental.serverActions.bodySizeLimit` (this repo uses `"32mb"`)
 
 ## Scripts
@@ -30,7 +29,7 @@ Copy the **`cms/`** folder into the project root, run **`node cms/install.mjs`**
 | --------------------- | -------------------------------------------- |
 | `bun run cms:sync`    | `cms/routes/app` → `src/app`                 |
 | `bun run cms:install` | Run `cms/install.mjs`                        |
-| `bun run db:push`     | Apply Drizzle schema to SQLite               |
+| `bun run db:push`     | Apply Drizzle schema to Turso/libSQL         |
 | `bun run dev:fresh`   | Clear `.next` then `next dev --turbopack`    |
 | `bun run dev:webpack` | `next dev` without Turbopack                 |
 | `bun run validate`    | ESLint + TypeScript + Prettier check + build |

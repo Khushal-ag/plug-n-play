@@ -79,23 +79,23 @@ function writeDrizzleConfig() {
   const target = path.join(projectRoot, "drizzle.config.ts");
   const schema = "./cms/module/database/schema.ts";
   if (fs.existsSync(target)) {
-    log(
-      `drizzle.config.ts already exists — ensure schema points to ${schema}`,
-    );
+    log(`drizzle.config.ts already exists — ensure schema points to ${schema}`);
     return;
   }
-  const body = `import path from "node:path";
+  const body = `import { defineConfig } from "drizzle-kit";
 
-import { defineConfig } from "drizzle-kit";
-
-const dbFile = process.env.CMS_DB_PATH ?? "./data/cms.sqlite";
+const url = process.env.TURSO_DATABASE_URL;
+if (!url) {
+  throw new Error("Missing TURSO_DATABASE_URL for drizzle-kit.");
+}
 
 export default defineConfig({
   schema: "${schema}",
   out: "./drizzle",
-  dialect: "sqlite",
+  dialect: "turso",
   dbCredentials: {
-    url: path.resolve(process.cwd(), dbFile),
+    url,
+    authToken: process.env.TURSO_AUTH_TOKEN,
   },
 });
 `;
@@ -108,7 +108,8 @@ function appendEnvExample() {
   const snippet = `
 # CMS
 ADMIN_PASSWORD=
-CMS_DB_PATH=./data/cms.sqlite
+TURSO_DATABASE_URL=
+TURSO_AUTH_TOKEN=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_CMS_ADMIN_BASE=/admin
 NEXT_PUBLIC_CMS_BRAND_NAME=Content Studio
@@ -123,7 +124,7 @@ NEXT_PUBLIC_CMS_DEFAULT_DESCRIPTION=
     return;
   }
   const cur = fs.readFileSync(target, "utf8");
-  if (cur.includes("ADMIN_PASSWORD=") && cur.includes("CMS_DB_PATH")) {
+  if (cur.includes("ADMIN_PASSWORD=") && cur.includes("TURSO_DATABASE_URL=")) {
     log(".env.example already mentions CMS — skipped");
     return;
   }
@@ -132,31 +133,7 @@ NEXT_PUBLIC_CMS_DEFAULT_DESCRIPTION=
 }
 
 function hintNextConfig() {
-  log(
-    "Ensure next.config includes: serverExternalPackages: [\"better-sqlite3\"] (merge with your existing config).",
-  );
-}
-
-/** Default site chrome: editable HTML in src/partials (see cms/README.md). */
-function ensureSitePartials() {
-  const tmplDir = path.join(__dirname, "templates", "partials");
-  if (!fs.existsSync(tmplDir)) return;
-  const destDir = path.join(projectRoot, "src", "partials");
-  for (const f of ["header.html", "footer.html"]) {
-    const dest = path.join(destDir, f);
-    if (fs.existsSync(dest)) continue;
-    const src = path.join(tmplDir, f);
-    if (!fs.existsSync(src)) continue;
-    if (dryRun) {
-      log(
-        `Would create src/partials/${f} (shared header/footer for public pages)`,
-      );
-      continue;
-    }
-    fs.mkdirSync(destDir, { recursive: true });
-    fs.copyFileSync(src, dest);
-    log(`Created src/partials/${f} (shared header/footer for public pages)`);
-  }
+  log("No DB-specific next.config setting required for Turso/libSQL.");
 }
 
 function runPackageInstall() {
@@ -185,7 +162,11 @@ function runPackageInstall() {
   }
 
   if (pm === "bun") {
-    if (prod.length) spawnSync("bun", ["add", ...prod], { cwd: projectRoot, stdio: "inherit" });
+    if (prod.length)
+      spawnSync("bun", ["add", ...prod], {
+        cwd: projectRoot,
+        stdio: "inherit",
+      });
     if (dev.length) {
       spawnSync("bun", ["add", "-d", ...dev], {
         cwd: projectRoot,
@@ -259,15 +240,15 @@ function main() {
     log("Would copy routes -> src/app");
   }
 
-  ensureSitePartials();
-
   mergeTsconfigPaths();
   writeDrizzleConfig();
   appendEnvExample();
   hintNextConfig();
   runPackageInstall();
 
-  log("Done. Set ADMIN_PASSWORD in .env.local, run db:push, then dev. Keep the cms/ folder in the project.");
+  log(
+    "Done. Set ADMIN_PASSWORD in .env.local, run db:push, then dev. Keep the cms/ folder in the project.",
+  );
 }
 
 main();

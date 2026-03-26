@@ -26,8 +26,10 @@ export const cmsDefaultMetaDescription =
 export const cmsConfig = {
   adminBasePath: cmsAdminBasePath,
   cookieName: "cms_admin_session" as const,
-  /** SQLite file path env key */
-  dbPathEnv: "CMS_DB_PATH",
+  /** Turso/libSQL connection URL env key */
+  dbUrlEnv: "TURSO_DATABASE_URL",
+  /** Optional Turso auth token env key */
+  dbAuthTokenEnv: "TURSO_AUTH_TOKEN",
   /** Admin password env key */
   adminPasswordEnv: "ADMIN_PASSWORD",
 } as const;

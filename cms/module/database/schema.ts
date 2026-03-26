@@ -32,7 +32,6 @@ export const pages = sqliteTable(
 );
 
 export type PageSelect = typeof pages.$inferSelect;
-export type PageInsert = typeof pages.$inferInsert;
 
 /** Shared CSS/JS/images for all pages (unique filename). */
 export const siteAssets = sqliteTable(
@@ -47,5 +46,3 @@ export const siteAssets = sqliteTable(
   },
   (table) => [uniqueIndex("site_assets_filename_unique").on(table.filename)],
 );
-
-export type SiteAssetSelect = typeof siteAssets.$inferSelect;

@@ -27,12 +27,13 @@ export async function GET(_request: Request, context: RouteContext) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const db = getDrizzle();
-  const row = db
+  const db = await getDrizzle();
+  const rows = await db
     .select()
     .from(siteAssets)
     .where(eq(siteAssets.filename, safe))
-    .get();
+    .limit(1);
+  const row = rows[0];
 
   if (!row) {
     return new NextResponse("Not found", { status: 404 });

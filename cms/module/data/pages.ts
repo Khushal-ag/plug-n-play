@@ -46,21 +46,25 @@ function mapPage(row: PageSelect): PageRow {
 }
 
 export async function listPages(): Promise<PageRow[]> {
-  const db = getDrizzle();
-  const rows = db.select().from(pages).orderBy(desc(pages.updatedAt)).all();
+  const db = await getDrizzle();
+  const rows = await db
+    .select()
+    .from(pages)
+    .orderBy(desc(pages.updatedAt))
+    .execute();
   return rows.map(mapPage);
 }
 
 export async function listPublishedForSitemap(): Promise<
   Pick<PageRow, "slug" | "updated_at">[]
 > {
-  const db = getDrizzle();
-  const rows = db
+  const db = await getDrizzle();
+  const rows = await db
     .select({ slug: pages.slug, updated_at: pages.updatedAt })
     .from(pages)
     .where(eq(pages.isPublished, 1))
     .orderBy(pages.slug)
-    .all();
+    .execute();
   return rows.map((r) => ({
     slug: r.slug,
     updated_at: r.updated_at,
@@ -68,26 +72,29 @@ export async function listPublishedForSitemap(): Promise<
 }
 
 export async function getPageById(id: number): Promise<PageRow | undefined> {
-  const db = getDrizzle();
-  const row = db.select().from(pages).where(eq(pages.id, id)).get();
+  const db = await getDrizzle();
+  const rows = await db.select().from(pages).where(eq(pages.id, id)).limit(1);
+  const row = rows[0];
   return row ? mapPage(row) : undefined;
 }
 
 export async function getPageBySlug(
   slug: string,
 ): Promise<PageRow | undefined> {
-  const db = getDrizzle();
-  const row = db
+  const db = await getDrizzle();
+  const rows = await db
     .select()
     .from(pages)
     .where(and(eq(pages.slug, slug), eq(pages.isPublished, 1)))
-    .get();
+    .limit(1);
+  const row = rows[0];
   return row ? mapPage(row) : undefined;
 }
 
 export async function createPage(input: PageInput): Promise<void> {
-  const db = getDrizzle();
-  db.insert(pages)
+  const db = await getDrizzle();
+  await db
+    .insert(pages)
     .values({
       slug: input.slug,
       title: input.title,
@@ -97,12 +104,13 @@ export async function createPage(input: PageInput): Promise<void> {
       metaKeywords: input.metaKeywords,
       isPublished: input.isPublished ? 1 : 0,
     })
-    .run();
+    .execute();
 }
 
 export async function updatePage(id: number, input: PageInput): Promise<void> {
-  const db = getDrizzle();
-  db.update(pages)
+  const db = await getDrizzle();
+  await db
+    .update(pages)
     .set({
       slug: input.slug,
       title: input.title,
@@ -113,10 +121,10 @@ export async function updatePage(id: number, input: PageInput): Promise<void> {
       isPublished: input.isPublished ? 1 : 0,
     })
     .where(eq(pages.id, id))
-    .run();
+    .execute();
 }
 
 export async function deletePage(id: number): Promise<void> {
-  const db = getDrizzle();
-  db.delete(pages).where(eq(pages.id, id)).run();
+  const db = await getDrizzle();
+  await db.delete(pages).where(eq(pages.id, id)).execute();
 }

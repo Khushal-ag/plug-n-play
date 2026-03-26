@@ -16,7 +16,7 @@ build/
 .env.*
 !.env.example
 
-# Local SQLite DB
+# Optional local libsql/sqlite file DB (for testing)
 /data/
 
 # Logs & debug

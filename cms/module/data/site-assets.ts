@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { getDrizzle, withSqliteTransaction } from "@cms/database/client";
+import { getDrizzle } from "@cms/database/client";
 import { siteAssets } from "@cms/database/schema";
 import {
   parsePageAssetsJson,
@@ -9,8 +9,8 @@ import {
 } from "@cms/lib/page-assets";
 
 export async function getSiteAssetsMap(): Promise<Record<string, string>> {
-  const db = getDrizzle();
-  const rows = db.select().from(siteAssets).all();
+  const db = await getDrizzle();
+  const rows = await db.select().from(siteAssets).execute();
   const out: Record<string, string> = {};
   for (const row of rows) {
     const safe = sanitizeAssetFilename(row.filename);
@@ -21,11 +21,11 @@ export async function getSiteAssetsMap(): Promise<Record<string, string>> {
 
 /** One DB read per request when called from multiple RSCs/routes in the same render. */
 export const getSiteAssetFilenames = cache(async (): Promise<string[]> => {
-  const db = getDrizzle();
-  const rows = db
+  const db = await getDrizzle();
+  const rows = await db
     .select({ filename: siteAssets.filename })
     .from(siteAssets)
-    .all();
+    .execute();
   const names: string[] = [];
   for (const r of rows) {
     const safe = sanitizeAssetFilename(r.filename);
@@ -42,11 +42,11 @@ export async function replaceSiteAssets(
 ): Promise<void> {
   const json = serializePageAssets(assets);
   const cleaned = parsePageAssetsJson(json);
-  withSqliteTransaction(() => {
-    const db = getDrizzle();
-    db.delete(siteAssets).run();
+  const db = await getDrizzle();
+  await db.transaction(async (tx) => {
+    await tx.delete(siteAssets).execute();
     for (const [filename, content] of Object.entries(cleaned)) {
-      db.insert(siteAssets).values({ filename, content }).run();
+      await tx.insert(siteAssets).values({ filename, content }).execute();
     }
   });
 }

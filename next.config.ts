@@ -9,7 +9,6 @@ const imageHostnames = (process.env.NEXT_PUBLIC_IMAGE_HOSTS ?? "")
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: isProd,
-  serverExternalPackages: ["better-sqlite3"],
   /** Site/page asset forms send JSON + base64 images; default limit is too small */
   experimental: {
     serverActions: {
